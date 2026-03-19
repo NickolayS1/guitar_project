@@ -1,0 +1,13 @@
+/architecture_transcription.txt
+/configs
+/data
+/data_loading
+/docs
+/evaluation
+/experiments
+/EXPERIMENTS_PLAN.md
+/models
+/onsets
+/test.py
+/training
+/utils
