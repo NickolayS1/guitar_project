@@ -1,0 +1,115 @@
+# Configuration for Dual-Branch Guitar Transcription Training
+
+# Experiment settings
+experiment:
+  name: "dual_branch_audio_only"
+  seed: 42
+  device: "cuda"  # "cuda" or "cpu"
+
+# Data settings
+data:
+  root_dir: "data/guitarset"
+  split_dir: "splits"
+  csv_dir: "csv_annotations"
+  audio_dir: "audio_mono-mic"
+  
+  # Audio parameters
+  sr: 22050
+  hop_length: 512
+  n_bins: 72
+  bins_per_octave: 12
+  fmin: 65.4  # C2
+  
+  # Dataset parameters
+  context_window_ms: 150
+  prediction_frames: 1
+  total_frames: 13  # 2 * context_frames + prediction_frames
+  
+  # Normalization
+  midi_min: 40  # E2
+  midi_max: 103  # C6
+  
+  # Augmentation
+  augmentation:
+    pitch_shift_range: [-2.0, 2.0]  # semitones
+    time_stretch_range: [0.9, 1.1]
+    noise_std: 0.005
+    apply_augmentation: true
+
+# Model settings
+model:
+  type: "DualBranchCNN"  # "BaselineCNN" or "DualBranchCNN"
+  n_strings: 6
+  
+  # Dual-Branch CNN architecture
+  dual_branch:
+    encoder_channels: [32, 64, 96]
+    head_hidden: 64
+    dropout: 0.3
+    se_reduction: 8  # SE block reduction ratio
+
+# Training settings
+training:
+  batch_size: 32
+  epochs: 3
+  optimizer: "adam"
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  grad_clip: 1.0
+  
+  # DataLoader settings
+  num_workers: 0  # Number of worker processes (0 = main process)
+  prefetch_factor: 2  # Number of batches loaded in advance by each worker
+  
+  # Loss weights
+  loss:
+    onset_weight: 5.0  # Increased from 1.0 - onset is harder to learn
+    pitch_weight: 1.0
+    onset_pos_weight: 3.0  # Weight positive onsets 3x more (class imbalance)
+  
+  # Learning rate scheduler
+  scheduler:
+    type: "reduce_on_plateau"
+    mode: "min"
+    factor: 0.5
+    patience: 5
+    min_lr: 0.000001  # Use explicit float notation (1e-6 can be read as string)
+  
+  # Early stopping
+  early_stopping:
+    patience: 15
+    min_delta: 0.0001
+    mode: "min"
+  
+  # Validation
+  validation:
+    interval: 1  # Validate every N epochs
+    save_best: true
+  
+  # Checkpointing
+  checkpoint:
+    save_dir: "experiments/dual_branch/checkpoints"
+    save_last: true
+    save_best: true
+  
+  # Logging
+  logging:
+    log_dir: "experiments/dual_branch/logs"
+    print_freq: 1  # Print every N batches
+    use_tqdm: true
+
+# Evaluation settings
+evaluation:
+  onset_threshold: 0.5
+  onset_tolerance_ms: 50
+  midi_min: 40
+  midi_max: 103
+  
+  # Metrics
+  metrics:
+    - "onset_precision"
+    - "onset_recall"
+    - "onset_f1"
+    - "pitch_mae"
+    - "pitch_rmse"
+    - "combined_score"

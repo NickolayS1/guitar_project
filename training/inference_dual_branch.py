@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Inference script for baseline guitar transcription model.
+Inference script for dual-branch guitar transcription model.
 
 Usage:
-    python training/inference_baseline.py --checkpoint experiments/baseline/checkpoints/checkpoint_best.pth
+    python training/inference_dual_branch.py --checkpoint experiments/dual_branch/checkpoints/checkpoint_best.pth
 """
 
 import argparse
@@ -19,7 +19,7 @@ import numpy as np
 import torch
 import yaml
 
-from models.baseline_cnn import BaselineCNN
+from models.dual_branch_cnn import DualBranchCNN, get_default_config
 from data_loading.guitarset_frame_dataset import GuitarSetFrameDataset
 from data_loading.dataloader import create_dataloader
 from evaluation.metrics import GuitarTranscriptionMetrics
@@ -73,10 +73,10 @@ def evaluate_model(model, dataloader, device, onset_threshold=0.5):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Evaluate baseline guitar transcription model')
+    parser = argparse.ArgumentParser(description='Evaluate dual-branch guitar transcription model')
     parser.add_argument('--checkpoint', '-c', type=str, required=True,
                         help='Path to model checkpoint')
-    parser.add_argument('--config', type=str, default='configs/baseline_config.yaml',
+    parser.add_argument('--config', type=str, default='configs/dual_branch_config.yaml',
                         help='Path to configuration file')
     parser.add_argument('--split', type=str, default='test',
                         help='Dataset split to evaluate (train/val/test)')
@@ -104,18 +104,18 @@ def main():
     
     # Create model with current config parameters
     print(f"Creating model with parameters:")
-    print(f"  encoder_channels: {config['model']['baseline']['encoder_channels']}")
-    print(f"  head_hidden: {config['model']['baseline']['head_hidden']}")
-    print(f"  dropout: {config['model']['baseline']['dropout']}")
+    print(f"  encoder_channels: {config['model']['dual_branch']['encoder_channels']}")
+    print(f"  head_hidden: {config['model']['dual_branch']['head_hidden']}")
+    print(f"  dropout: {config['model']['dual_branch']['dropout']}")
+    print(f"  se_reduction: {config['model']['dual_branch']['se_reduction']}")
     
-    model = BaselineCNN(
+    model = DualBranchCNN(
         n_strings=config['model']['n_strings'],
-        encoder_channels=config['model']['baseline']['encoder_channels'],
-        head_hidden=config['model']['baseline']['head_hidden'],
-        dropout=config['model']['baseline']['dropout']
+        encoder_channels=config['model']['dual_branch']['encoder_channels'],
+        head_hidden=config['model']['dual_branch']['head_hidden'],
+        dropout=config['model']['dual_branch']['dropout'],
+        se_reduction=config['model']['dual_branch']['se_reduction']
     )
-    
-    print(f"Model created with {model.count_parameters():,} parameters")
     
     # Load weights with error handling for shape mismatch
     try:
@@ -132,13 +132,15 @@ def main():
             print(f"  2. Checkpoint is from old model architecture")
             print(f"\nSolutions:")
             print(f"  1. Re-train model with current config:")
-            print(f"     python training/train_baseline.py --config configs/baseline_config.yaml")
+            print(f"     python training/train_dual_branch.py --config configs/dual_branch_config.yaml")
             print(f"  2. Or restore original config parameters")
             print(f"\nOriginal error: {e}")
             print(f"{'='*60}\n")
             sys.exit(1)
         else:
             raise
+    
+    print(f"Model created with {model.count_parameters():,} parameters")
     
     # Move model to device
     model.to(device)

@@ -3,7 +3,7 @@
 Baseline CNN model for guitar transcription.
 
 Late-split architecture with shared encoder and dual prediction heads.
-~266K parameters.
+~250K parameters (optimized baseline).
 
 Input: [B, 1, 13, 72] - CQT spectrogram
 Output: 
@@ -19,74 +19,80 @@ class BaselineCNN(nn.Module):
     """
     Baseline CNN with late split for guitar transcription.
     
-    Architecture:
-    - Shared encoder: 3 conv blocks with max pooling
-    - Dual heads: Onset (classification) + Pitch (regression)
+    Architecture (optimized for ~250K parameters):
+    - Shared encoder: 3 conv blocks with reduced channels [32, 64, 128]
+    - Dual heads: Onset (classification) + Pitch (regression) with reduced hidden size
     """
     
-    def __init__(self, n_strings: int = 6, dropout: float = 0.3):
+    def __init__(self, n_strings: int = 6, encoder_channels: list = None, head_hidden: int = 64, dropout: float = 0.3):
         super().__init__()
         
         self.n_strings = n_strings
         
+        # Default channels if not specified
+        if encoder_channels is None:
+            encoder_channels = [32, 64, 128]
+        
+        c1, c2, c3 = encoder_channels
+        
         # === Shared Encoder ===
-        # Block 1: [B, 1, 13, 72] → [B, 64, 6, 36]
+        # Block 1: [B, 1, 13, 72] → [B, c1, 6, 36]
         self.encoder1 = nn.Sequential(
-            nn.Conv2d(1, 64, kernel_size=3, padding=1),
-            nn.BatchNorm2d(64),
+            nn.Conv2d(1, c1, kernel_size=3, padding=1),
+            nn.BatchNorm2d(c1),
             nn.ReLU(inplace=True),
-            nn.Conv2d(64, 64, kernel_size=3, padding=1),
-            nn.BatchNorm2d(64),
+            nn.Conv2d(c1, c1, kernel_size=3, padding=1),
+            nn.BatchNorm2d(c1),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(2)  # [B, 64, 6, 36]
+            nn.MaxPool2d(2)  # [B, c1, 6, 36]
         )
         
-        # Block 2: [B, 64, 6, 36] → [B, 128, 3, 18]
+        # Block 2: [B, c1, 6, 36] → [B, c2, 3, 18]
         self.encoder2 = nn.Sequential(
-            nn.Conv2d(64, 128, kernel_size=3, padding=1),
-            nn.BatchNorm2d(128),
+            nn.Conv2d(c1, c2, kernel_size=3, padding=1),
+            nn.BatchNorm2d(c2),
             nn.ReLU(inplace=True),
-            nn.Conv2d(128, 128, kernel_size=3, padding=1),
-            nn.BatchNorm2d(128),
+            nn.Conv2d(c2, c2, kernel_size=3, padding=1),
+            nn.BatchNorm2d(c2),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(2)  # [B, 128, 3, 18]
+            nn.MaxPool2d(2)  # [B, c2, 3, 18]
         )
         
-        # Block 3: [B, 128, 3, 18] → [B, 256, 3, 18]
+        # Block 3: [B, c2, 3, 18] → [B, c3, 3, 18]
         self.encoder3 = nn.Sequential(
-            nn.Conv2d(128, 256, kernel_size=3, padding=1),
-            nn.BatchNorm2d(256),
+            nn.Conv2d(c2, c3, kernel_size=3, padding=1),
+            nn.BatchNorm2d(c3),
             nn.ReLU(inplace=True),
-            nn.Conv2d(256, 256, kernel_size=3, padding=1),
-            nn.BatchNorm2d(256),
+            nn.Conv2d(c3, c3, kernel_size=3, padding=1),
+            nn.BatchNorm2d(c3),
             nn.ReLU(inplace=True)
             # No pooling - keep spatial dimensions
         )
         
         # Global pooling
-        self.global_pool = nn.AdaptiveAvgPool2d((1, 1))  # [B, 256, 1, 1]
+        self.global_pool = nn.AdaptiveAvgPool2d((1, 1))  # [B, c3, 1, 1]
         
         # Flatten
-        self.flatten = nn.Flatten()  # [B, 256]
+        self.flatten = nn.Flatten()  # [B, c3]
         
         # Dropout before heads
         self.dropout = nn.Dropout(dropout)
         
         # === Onset Head ===
         self.onset_head = nn.Sequential(
-            nn.Linear(256, 128),
+            nn.Linear(c3, head_hidden),
             nn.ReLU(inplace=True),
             nn.Dropout(dropout),
-            nn.Linear(128, n_strings),
+            nn.Linear(head_hidden, n_strings),
             nn.Sigmoid()
         )
         
         # === Pitch Head ===
         self.pitch_head = nn.Sequential(
-            nn.Linear(256, 128),
+            nn.Linear(c3, head_hidden),
             nn.ReLU(inplace=True),
             nn.Dropout(dropout),
-            nn.Linear(128, n_strings)
+            nn.Linear(head_hidden, n_strings)
             # No activation - regression output
         )
     
@@ -153,9 +159,22 @@ class BaselineCNN(nn.Module):
         return sum(p.numel() for p in self.parameters())
 
 
+def get_default_config() -> dict:
+    """Get default model configuration."""
+    return {
+        'encoder_channels': [32, 64, 96],
+        'head_hidden': 48,
+        'dropout': 0.3
+    }
+
+
 def test_model():
     """Test the model with dummy input."""
-    model = BaselineCNN()
+    # Test with default parameters (optimized baseline)
+    model = BaselineCNN(
+        encoder_channels=[32, 64, 96],
+        head_hidden=48
+    )
     
     # Dummy input: batch=2, channels=1, time=13, freq=72
     x = torch.randn(2, 1, 13, 72)

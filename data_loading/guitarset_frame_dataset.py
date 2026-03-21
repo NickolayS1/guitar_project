@@ -376,21 +376,25 @@ class GuitarSetFrameDataset(Dataset):
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
         sample = self.samples[idx]
 
-        # Load audio
-        audio, _ = librosa.load(sample['audio_path'], sr=AudioConfig.sr)
-
-        # Compute CQT
-        cqt = np.abs(librosa.cqt(
-            audio,
-            sr=AudioConfig.sr,
-            hop_length=AudioConfig.hop_length,
-            n_bins=AudioConfig.n_bins,
-            bins_per_octave=AudioConfig.bins_per_octave,
-            fmin=AudioConfig.fmin
-        ))
-
-        # Convert to log scale
-        cqt_db = librosa.amplitude_to_db(cqt, ref=np.max)
+        # Try to load pre-computed CQT from cache
+        cache_dir = Path(sample['audio_path']).parent.parent / 'cqt_cache'
+        cache_file = cache_dir / Path(sample['audio_path']).with_suffix('.npy').name
+        
+        if cache_file.exists():
+            # Load pre-computed CQT (much faster!)
+            cqt_db = np.load(str(cache_file))
+        else:
+            # Fallback: compute CQT on-the-fly (slow!)
+            audio, _ = librosa.load(sample['audio_path'], sr=AudioConfig.sr)
+            cqt = np.abs(librosa.cqt(
+                audio,
+                sr=AudioConfig.sr,
+                hop_length=AudioConfig.hop_length,
+                n_bins=AudioConfig.n_bins,
+                bins_per_octave=AudioConfig.bins_per_octave,
+                fmin=AudioConfig.fmin
+            ))
+            cqt_db = librosa.amplitude_to_db(cqt, ref=np.max)
 
         # Extract window centered on prediction frame
         center_frame = int(sample['center_time'] * AudioConfig.sr / AudioConfig.hop_length)
@@ -404,7 +408,7 @@ class GuitarSetFrameDataset(Dataset):
 
         # Prepare labels (already Gaussian-smoothed in _prepare_samples)
         onset = torch.FloatTensor(sample['onset'])
-        pitch = torch.FloatTensor(self._normalize_pitch(sample['pitch']))
+        pitch = torch.FloatTensor(self._normalize_pitch(sample['pitch'], mask=sample['onset']))
 
         return {
             'cqt': torch.FloatTensor(cqt_window),  # [total_frames, n_bins]
@@ -455,12 +459,25 @@ class GuitarSetFrameDataset(Dataset):
         
         return window
     
-    def _normalize_pitch(self, pitch: np.ndarray) -> np.ndarray:
-        """Normalize MIDI pitch to [0, 1] range."""
-        active = pitch > 0
+    def _normalize_pitch(self, pitch: np.ndarray, mask: np.ndarray = None) -> np.ndarray:
+        """
+        Normalize MIDI pitch to [0, 1] range.
+        
+        For inactive strings (mask=0), returns 0.
+        """
+        normalized = np.zeros_like(pitch, dtype=np.float32)
+        
+        if mask is None:
+            mask = pitch > 0
+        
+        active = mask > 0.5
         if active.any():
-            pitch[active] = (pitch[active] - AudioConfig.midi_min) / (AudioConfig.midi_max - AudioConfig.midi_min)
-        return pitch
+            # Normalize only active strings
+            normalized[active] = (pitch[active] - AudioConfig.midi_min) / (AudioConfig.midi_max - AudioConfig.midi_min)
+            # Clip to [0, 1]
+            normalized = np.clip(normalized, 0, 1)
+        
+        return normalized
     
     def _denormalize_pitch(self, pitch: np.ndarray) -> np.ndarray:
         """Denormalize pitch from [0, 1] to MIDI."""

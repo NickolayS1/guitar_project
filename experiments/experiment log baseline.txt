@@ -1,0 +1,356 @@
+Loading config from configs/baseline_config.yaml...
+
+============================================================
+Guitar Transcription Training - Baseline CNN
+============================================================
+Experiment: baseline_audio_only
+Device: cuda
+============================================================
+
+Loading datasets...
+GuitarSet train: 84368 samples
+  Positive: 42184
+  Negative: 42184
+GuitarSet val: 20034 samples
+  Positive: 10017
+  Negative: 10017
+Training samples: 84368
+Validation samples: 20034
+
+Creating model...
+Model parameters: 214,092
+
+Starting training for 50 epochs...
+
+Epoch 1/50: 100%|██████████| 329/329 [00:39<00:00,  8.43it/s, loss=0.2899, onset=0.2864, pitch=0.0035]
+
+Epoch 1 summary:
+  Time: 46.7s
+  Val Loss: 0.3272
+  Val Onset: 0.3254
+  Val Pitch: 0.0018
+
+Epoch 2/50: 100%|██████████| 329/329 [00:39<00:00,  8.25it/s, loss=0.2675, onset=0.2657, pitch=0.0019]
+
+Epoch 2 summary:
+  Time: 48.7s
+  Val Loss: 0.2954
+  Val Onset: 0.2938
+  Val Pitch: 0.0016
+
+Epoch 3/50: 100%|██████████| 329/329 [00:39<00:00,  8.31it/s, loss=0.2496, onset=0.2483, pitch=0.0013]
+
+Epoch 3 summary:
+  Time: 47.1s
+  Val Loss: 0.2792
+  Val Onset: 0.2779
+  Val Pitch: 0.0013
+
+Epoch 4/50: 100%|██████████| 329/329 [00:39<00:00,  8.29it/s, loss=0.2846, onset=0.2832, pitch=0.0014]
+
+Epoch 4 summary:
+  Time: 48.5s
+  Val Loss: 0.2692
+  Val Onset: 0.2681
+  Val Pitch: 0.0011
+
+Epoch 5/50: 100%|██████████| 329/329 [00:39<00:00,  8.34it/s, loss=0.2390, onset=0.2374, pitch=0.0016]
+
+Epoch 5 summary:
+  Time: 47.6s
+  Val Loss: 0.2671
+  Val Onset: 0.2655
+  Val Pitch: 0.0016
+
+Epoch 6/50: 100%|██████████| 329/329 [00:38<00:00,  8.48it/s, loss=0.2469, onset=0.2456, pitch=0.0013]
+
+Epoch 6 summary:
+  Time: 46.8s
+  Val Loss: 0.2627
+  Val Onset: 0.2615
+  Val Pitch: 0.0012
+
+Epoch 7/50: 100%|██████████| 329/329 [00:38<00:00,  8.50it/s, loss=0.2425, onset=0.2415, pitch=0.0010]
+
+Epoch 7 summary:
+  Time: 47.5s
+  Val Loss: 0.2574
+  Val Onset: 0.2563
+  Val Pitch: 0.0011
+
+Epoch 8/50: 100%|██████████| 329/329 [00:38<00:00,  8.46it/s, loss=0.2413, onset=0.2399, pitch=0.0014]
+
+Epoch 8 summary:
+  Time: 46.4s
+  Val Loss: 0.2661
+  Val Onset: 0.2649
+  Val Pitch: 0.0012
+
+Epoch 9/50: 100%|██████████| 329/329 [00:39<00:00,  8.27it/s, loss=0.2502, onset=0.2490, pitch=0.0011]
+
+Epoch 9 summary:
+  Time: 48.6s
+  Val Loss: 0.2529
+  Val Onset: 0.2519
+  Val Pitch: 0.0010
+
+Epoch 10/50: 100%|██████████| 329/329 [00:40<00:00,  8.09it/s, loss=0.2643, onset=0.2630, pitch=0.0013]
+
+Epoch 10 summary:
+  Time: 49.1s
+  Val Loss: 0.2560
+  Val Onset: 0.2550
+  Val Pitch: 0.0011
+
+Epoch 11/50: 100%|██████████| 329/329 [00:39<00:00,  8.33it/s, loss=0.2378, onset=0.2368, pitch=0.0010]
+
+Epoch 11 summary:
+  Time: 47.3s
+  Val Loss: 0.2595
+  Val Onset: 0.2584
+  Val Pitch: 0.0011
+
+Epoch 12/50: 100%|██████████| 329/329 [00:39<00:00,  8.33it/s, loss=0.2459, onset=0.2449, pitch=0.0011]
+
+Epoch 12 summary:
+  Time: 48.4s
+  Val Loss: 0.2524
+  Val Onset: 0.2514
+  Val Pitch: 0.0010
+
+Epoch 13/50: 100%|██████████| 329/329 [00:39<00:00,  8.43it/s, loss=0.2355, onset=0.2346, pitch=0.0009]
+
+Epoch 13 summary:
+  Time: 46.4s
+  Val Loss: 0.2552
+  Val Onset: 0.2542
+  Val Pitch: 0.0010
+
+Epoch 14/50: 100%|██████████| 329/329 [00:39<00:00,  8.25it/s, loss=0.2132, onset=0.2121, pitch=0.0011]
+
+Epoch 14 summary:
+  Time: 48.6s
+  Val Loss: 0.2542
+  Val Onset: 0.2532
+  Val Pitch: 0.0010
+
+Epoch 15/50: 100%|██████████| 329/329 [00:39<00:00,  8.31it/s, loss=0.1932, onset=0.1922, pitch=0.0009]
+
+Epoch 15 summary:
+  Time: 47.6s
+  Val Loss: 0.2573
+  Val Onset: 0.2563
+  Val Pitch: 0.0010
+
+Epoch 16/50: 100%|██████████| 329/329 [00:38<00:00,  8.49it/s, loss=0.1779, onset=0.1770, pitch=0.0009]
+
+Epoch 16 summary:
+  Time: 46.9s
+  Val Loss: 0.2538
+  Val Onset: 0.2528
+  Val Pitch: 0.0010
+
+Epoch 17/50: 100%|██████████| 329/329 [00:38<00:00,  8.44it/s, loss=0.1954, onset=0.1945, pitch=0.0009]
+
+Epoch 17 summary:
+  Time: 47.5s
+  Val Loss: 0.2596
+  Val Onset: 0.2586
+  Val Pitch: 0.0009
+
+Epoch 18/50: 100%|██████████| 329/329 [00:38<00:00,  8.47it/s, loss=0.2352, onset=0.2342, pitch=0.0010]
+
+Epoch 18 summary:
+  Time: 46.3s
+  Val Loss: 0.2650
+  Val Onset: 0.2640
+  Val Pitch: 0.0010
+
+Epoch 19/50: 100%|██████████| 329/329 [00:39<00:00,  8.39it/s, loss=0.2162, onset=0.2151, pitch=0.0011]
+
+Epoch 19 summary:
+  Time: 48.0s
+  Val Loss: 0.2671
+  Val Onset: 0.2662
+  Val Pitch: 0.0009
+
+Epoch 20/50: 100%|██████████| 329/329 [00:39<00:00,  8.28it/s, loss=0.1805, onset=0.1796, pitch=0.0010]
+
+Epoch 20 summary:
+  Time: 47.2s
+  Val Loss: 0.2675
+  Val Onset: 0.2666
+  Val Pitch: 0.0009
+
+Epoch 21/50: 100%|██████████| 329/329 [00:39<00:00,  8.40it/s, loss=0.1942, onset=0.1934, pitch=0.0008]
+
+Epoch 21 summary:
+  Time: 47.8s
+  Val Loss: 0.2716
+  Val Onset: 0.2707
+  Val Pitch: 0.0009
+
+Epoch 22/50: 100%|██████████| 329/329 [00:39<00:00,  8.39it/s, loss=0.1978, onset=0.1970, pitch=0.0008]
+
+Epoch 22 summary:
+  Time: 47.8s
+  Val Loss: 0.2726
+  Val Onset: 0.2717
+  Val Pitch: 0.0009
+
+Epoch 23/50: 100%|██████████| 329/329 [00:39<00:00,  8.40it/s, loss=0.1720, onset=0.1711, pitch=0.0009]
+
+Epoch 23 summary:
+  Time: 46.8s
+  Val Loss: 0.2779
+  Val Onset: 0.2770
+  Val Pitch: 0.0009
+
+Epoch 24/50: 100%|██████████| 329/329 [00:39<00:00,  8.33it/s, loss=0.1806, onset=0.1797, pitch=0.0009]
+
+Epoch 24 summary:
+  Time: 48.2s
+  Val Loss: 0.2729
+  Val Onset: 0.2720
+  Val Pitch: 0.0009
+
+Epoch 25/50: 100%|██████████| 329/329 [00:39<00:00,  8.25it/s, loss=0.1725, onset=0.1717, pitch=0.0007]
+
+Epoch 25 summary:
+  Time: 47.3s
+  Val Loss: 0.2946
+  Val Onset: 0.2937
+  Val Pitch: 0.0009
+
+Epoch 26/50: 100%|██████████| 329/329 [00:39<00:00,  8.35it/s, loss=0.1385, onset=0.1376, pitch=0.0010]
+
+Epoch 26 summary:
+  Time: 48.3s
+  Val Loss: 0.2930
+  Val Onset: 0.2921
+  Val Pitch: 0.0009
+
+Epoch 27/50: 100%|██████████| 329/329 [00:39<00:00,  8.34it/s, loss=0.1744, onset=0.1737, pitch=0.0007]
+
+Epoch 27 summary:
+  Time: 48.0s
+  Val Loss: 0.2905
+  Val Onset: 0.2896
+  Val Pitch: 0.0009
+
+
+Early stopping at epoch 27
+
+============================================================
+Training complete!
+Best validation loss: 0.2524
+Checkpoints saved to: /content/experiments/baseline/checkpoints
+============================================================
+
+Loading config from configs/baseline_config.yaml...
+Device: cuda
+
+Loading checkpoint from experiments/baseline/checkpoints/checkpoint_best.pth...
+Creating model with parameters:
+  encoder_channels: [32, 64, 96]
+  head_hidden: 48
+  dropout: 0.3
+Model created with 214,092 parameters
+Loaded checkpoint from epoch 12
+Loading test dataset...
+GuitarSet test: 20550 samples
+  Positive: 10275
+  Negative: 10275
+Evaluation samples: 20550
+
+Evaluating on test split...
+
+============================================================
+Debug: Sample predictions (first batch)
+============================================================
+Onset True:  [[0. 1. 0. 0. 0. 0.]
+ [0. 1. 0. 0. 0. 0.]
+ [0. 1. 0. 0. 0. 0.]
+ [0. 1. 0. 0. 0. 0.]]
+Onset Pred:  [[3.9540392e-01 8.4498662e-01 2.3012213e-02 6.0116407e-05 6.3544604e-08
+  1.2471602e-07]
+ [5.2291914e-03 9.7026068e-01 1.4534669e-01 3.1989057e-06 6.5093100e-12
+  7.4550891e-13]
+ [8.9091823e-02 9.7579473e-01 1.6480083e-02 7.9320296e-07 7.9205713e-12
+  8.6413975e-12]
+ [3.2031061e-03 8.3578855e-01 5.7191324e-01 8.0789716e-05 5.2097626e-10
+  7.7208752e-12]]
+Pitch True (norm):  [[0.         0.41269842 0.         0.         0.         0.        ]
+ [0.         0.42857143 0.         0.         0.         0.        ]
+ [0.         0.45968255 0.         0.         0.         0.        ]
+ [0.         0.4290476  0.         0.         0.         0.        ]]
+Pitch Pred (norm):  [[0.45375118 0.43321216 0.39972413 0.33207327 0.18484478 0.09692535]
+ [0.46265197 0.44582242 0.45992196 0.42163193 0.283407   0.18442315]
+ [0.45112318 0.43606833 0.43113142 0.37778497 0.22380996 0.1306212 ]
+ [0.44366026 0.41794962 0.42294103 0.40182066 0.2890133  0.18499178]]
+Pitch True (MIDI):  [[40.   66.   40.   40.   40.   40.  ]
+ [40.   67.   40.   40.   40.   40.  ]
+ [40.   68.96 40.   40.   40.   40.  ]
+ [40.   67.03 40.   40.   40.   40.  ]]
+Pitch Pred (MIDI):  [[68.58633  67.292366 65.18262  60.920616 51.64522  46.106297]
+ [69.14707  68.086815 68.97508  66.56281  57.85464  51.61866 ]
+ [68.42076  67.472305 67.16128  63.800453 54.10003  48.229134]
+ [67.95059  66.330826 66.64529  65.3147   58.20784  51.65448 ]]
+============================================================
+
+============================================================
+Guitar Transcription Metrics Summary
+============================================================
+Onset Detection:
+  Precision: 0.497
+  Recall:    0.496
+  F1-Score:  0.494
+
+Pitch Estimation:
+  MAE:  1.71 semitones
+  RMSE: 2.17 semitones
+
+Combined Score: 0.423
+============================================================
+
+============================================================
+Detailed Metrics
+============================================================
+  onset_precision_s0: 0.5572
+  onset_recall_s0: 0.4390
+  onset_f1_s0: 0.4911
+  onset_precision_s1: 0.4613
+  onset_recall_s1: 0.5492
+  onset_f1_s1: 0.5014
+  onset_precision_s2: 0.5160
+  onset_recall_s2: 0.4727
+  onset_f1_s2: 0.4934
+  onset_precision_s3: 0.4438
+  onset_recall_s3: 0.4533
+  onset_f1_s3: 0.4485
+  onset_precision_s4: 0.4880
+  onset_recall_s4: 0.4681
+  onset_f1_s4: 0.4778
+  onset_precision_s5: 0.5140
+  onset_recall_s5: 0.5912
+  onset_f1_s5: 0.5499
+  onset_precision: 0.4967
+  onset_recall: 0.4956
+  onset_f1: 0.4937
+  pitch_mae_s0: 1.9931
+  pitch_rmse_s0: 2.4957
+  pitch_mae_s1: 1.8084
+  pitch_rmse_s1: 2.3040
+  pitch_mae_s2: 1.6565
+  pitch_rmse_s2: 2.1054
+  pitch_mae_s3: 1.7530
+  pitch_rmse_s3: 2.2332
+  pitch_mae_s4: 1.6166
+  pitch_rmse_s4: 2.1035
+  pitch_mae_s5: 1.4405
+  pitch_rmse_s5: 1.7867
+  pitch_mae: 1.7113
+  pitch_rmse: 2.1714
+  combined_score: 0.4233
+============================================================
+

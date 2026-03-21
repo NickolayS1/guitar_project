@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Training script for baseline guitar transcription model.
+Training script for dual-branch guitar transcription model.
 
 Usage:
-    python training/train_baseline.py --config configs/baseline_config.yaml
+    python training/train_dual_branch.py --config configs/dual_branch_config.yaml
 """
 
 import argparse
@@ -24,7 +24,7 @@ import torch.optim as optim
 import yaml
 from tqdm import tqdm
 
-from models.baseline_cnn import BaselineCNN
+from models.dual_branch_cnn import DualBranchCNN
 from data_loading.guitarset_frame_dataset import GuitarSetFrameDataset
 from data_loading.dataloader import create_dataloader
 from training.losses import CombinedLoss
@@ -129,8 +129,8 @@ def validate_epoch(model, dataloader, loss_fn, device):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Train baseline guitar transcription model')
-    parser.add_argument('--config', '-c', type=str, default='configs/baseline_config.yaml',
+    parser = argparse.ArgumentParser(description='Train dual-branch guitar transcription model')
+    parser.add_argument('--config', '-c', type=str, default='configs/dual_branch_config.yaml',
                         help='Path to configuration file')
     parser.add_argument('--epochs', type=int, default=None,
                         help='Number of epochs (overrides config)')
@@ -167,7 +167,7 @@ def main():
         device = torch.device('cpu')
     
     print(f"\n{'='*60}")
-    print(f"Guitar Transcription Training - Baseline CNN")
+    print(f"Guitar Transcription Training - Dual-Branch CNN")
     print(f"{'='*60}")
     print(f"Experiment: {config['experiment']['name']}")
     print(f"Device: {device}")
@@ -214,14 +214,16 @@ def main():
     
     # Create model
     print("Creating model...")
-    model = BaselineCNN(
+    model = DualBranchCNN(
         n_strings=config['model']['n_strings'],
-        encoder_channels=config['model']['baseline']['encoder_channels'],
-        head_hidden=config['model']['baseline']['head_hidden'],
-        dropout=config['model']['baseline']['dropout']
+        encoder_channels=config['model']['dual_branch']['encoder_channels'],
+        head_hidden=config['model']['dual_branch']['head_hidden'],
+        dropout=config['model']['dual_branch']['dropout'],
+        se_reduction=config['model']['dual_branch']['se_reduction']
     )
     
     model = model.to(device)
+    
     # Count parameters
     n_params = model.count_parameters()
     print(f"Model parameters: {n_params:,}\n")
@@ -236,7 +238,8 @@ def main():
     # Create loss function
     loss_fn = CombinedLoss(
         onset_weight=config['training']['loss']['onset_weight'],
-        pitch_weight=config['training']['loss']['pitch_weight']
+        pitch_weight=config['training']['loss']['pitch_weight'],
+        onset_pos_weight=config['training']['loss'].get('onset_pos_weight', 2.0)
     )
     
     # Create callbacks
@@ -287,13 +290,13 @@ def main():
         if use_tqdm:
             pbar = tqdm(train_loader, desc=f'Epoch {epoch}/{config["training"]["epochs"]}')
             for batch in pbar:
-                audio = batch['cqt'].to(device)
-                audio = audio.unsqueeze(1)
+                cqt = batch['cqt'].to(device)
+                cqt = cqt.unsqueeze(1)
                 onset_true = batch['onset'].to(device)
                 pitch_true = batch['pitch'].to(device)
                 
                 optimizer.zero_grad()
-                onset_pred, pitch_pred = model(audio)  # Positional argument, not keyword
+                onset_pred, pitch_pred = model(cqt)
                 losses = loss_fn(onset_pred, pitch_pred, onset_true, pitch_true)
                 loss = losses['total']
                 loss.backward()
@@ -310,29 +313,7 @@ def main():
                 })
         else:
             print(f'Epoch {epoch}/{config["training"]["epochs"]}')
-            for batch in train_loader:
-                audio = batch['cqt'].to(device)
-                audio = audio.unsqueeze(1)
-                onset_true = batch['onset'].to(device)
-                pitch_true = batch['pitch'].to(device)
-                
-                optimizer.zero_grad()
-                onset_pred, pitch_pred = model(audio)  # Positional argument
-                losses = loss_fn(onset_pred, pitch_pred, onset_true, pitch_true)
-                loss = losses['total']
-                loss.backward()
-                
-                if config['training']['grad_clip']:
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), config['training']['grad_clip'])
-                
-                optimizer.step()
-        
-        # Calculate training losses
-        train_metrics = {
-            'train_loss': 0,  # Will be updated in next epoch
-            'train_onset_loss': 0,
-            'train_pitch_loss': 0
-        }
+            train_epoch(model, train_loader, optimizer, loss_fn, device, config['training']['grad_clip'])
         
         # Validate
         if epoch % validation_interval == 0:
@@ -370,7 +351,7 @@ def main():
                 'epoch': epoch,
                 'model': model,
                 'optimizer': optimizer,
-                'metrics': val_metrics if epoch % validation_interval == 0 else train_metrics
+                'metrics': val_metrics if epoch % validation_interval == 0 else {}
             })
         
         # Check for early stopping
