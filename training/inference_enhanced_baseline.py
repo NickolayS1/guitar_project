@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Inference script for dual-branch guitar transcription model.
+Inference script for enhanced baseline guitar transcription model.
 
 Usage:
-    python training/inference_dual_branch.py --checkpoint experiments/dual_branch/checkpoints/checkpoint_best.pth
+    python training/inference_enhanced_baseline.py --checkpoint experiments/enhanced_baseline/checkpoints/checkpoint_best.pth
 """
 
 import argparse
@@ -19,7 +19,7 @@ import numpy as np
 import torch
 import yaml
 
-from models.dual_branch_cnn import DualBranchCNN, get_default_config
+from models.enhanced_baseline_cnn import EnhancedBaselineCNN
 from data_loading.guitarset_frame_dataset import GuitarSetFrameDataset
 from data_loading.dataloader import create_dataloader
 from evaluation.metrics import GuitarTranscriptionMetrics
@@ -73,10 +73,10 @@ def evaluate_model(model, dataloader, device, onset_threshold=0.5):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Evaluate dual-branch guitar transcription model')
+    parser = argparse.ArgumentParser(description='Evaluate enhanced baseline guitar transcription model')
     parser.add_argument('--checkpoint', '-c', type=str, required=True,
                         help='Path to model checkpoint')
-    parser.add_argument('--config', type=str, default='configs/dual_branch_config.yaml',
+    parser.add_argument('--config', type=str, default='configs/enhanced_baseline_config.yaml',
                         help='Path to configuration file')
     parser.add_argument('--split', type=str, default='test',
                         help='Dataset split to evaluate (train/val/test)')
@@ -104,19 +104,11 @@ def main():
     print(f"Loading checkpoint from {args.checkpoint}...")
     checkpoint = torch.load(args.checkpoint, map_location=device)
     
-    # Create model with current config parameters
-    print(f"Creating model with parameters:")
-    print(f"  encoder_channels: {config['model']['dual_branch']['encoder_channels']}")
-    print(f"  head_hidden: {config['model']['dual_branch']['head_hidden']}")
-    print(f"  dropout: {config['model']['dual_branch']['dropout']}")
-    print(f"  se_reduction: {config['model']['dual_branch']['se_reduction']}")
-    
-    model = DualBranchCNN(
+    # Create model
+    print(f"Creating model...")
+    model = EnhancedBaselineCNN(
         n_strings=config['model']['n_strings'],
-        encoder_channels=config['model']['dual_branch']['encoder_channels'],
-        head_hidden=config['model']['dual_branch']['head_hidden'],
-        dropout=config['model']['dual_branch']['dropout'],
-        se_reduction=config['model']['dual_branch']['se_reduction']
+        dropout=config['model']['enhanced_baseline']['dropout']
     )
     
     # Load weights with error handling for shape mismatch
@@ -134,7 +126,7 @@ def main():
             print(f"  2. Checkpoint is from old model architecture")
             print(f"\nSolutions:")
             print(f"  1. Re-train model with current config:")
-            print(f"     python training/train_dual_branch.py --config configs/dual_branch_config.yaml")
+            print(f"     python training/train_enhanced_baseline.py --config configs/enhanced_baseline_config.yaml")
             print(f"  2. Or restore original config parameters")
             print(f"\nOriginal error: {e}")
             print(f"{'='*60}\n")
@@ -178,32 +170,6 @@ def main():
         device,
         onset_threshold=args.threshold
     )
-    
-    # Debug: Print sample predictions
-    print(f"\n{'='*60}")
-    print(f"Debug: Sample predictions (first batch)")
-    print(f"{'='*60}")
-    model.eval()
-    with torch.no_grad():
-        batch = next(iter(dataloader))
-        cqt = batch['cqt'].to(device)[:4]
-        cqt = cqt.unsqueeze(1)
-        onset_true = batch['onset'][:4]
-        pitch_true = batch['pitch'][:4]
-        
-        onset_pred, pitch_pred = model(cqt)
-        
-        print(f"Onset True:  {onset_true.numpy()}")
-        print(f"Onset Pred:  {onset_pred.cpu().numpy()}")
-        print(f"Pitch True (norm):  {pitch_true.numpy()}")
-        print(f"Pitch Pred (norm):  {pitch_pred.cpu().numpy()}")
-        
-        # Denormalize (using C2=36, C8=108)
-        pitch_true_midi = pitch_true.numpy() * (108 - 36) + 36
-        pitch_pred_midi = pitch_pred.cpu().numpy() * (108 - 36) + 36
-        print(f"Pitch True (MIDI):  {pitch_true_midi}")
-        print(f"Pitch Pred (MIDI):  {pitch_pred_midi}")
-    print(f"{'='*60}\n")
     
     # Print summary
     print(collector.summary())

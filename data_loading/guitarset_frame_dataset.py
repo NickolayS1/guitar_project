@@ -54,9 +54,9 @@ class AudioConfig:
     context_frames = int(np.round(context_window_ms / frame_duration_ms))  # ~6 frames
     total_frames = 2 * context_frames + prediction_frames  # ~13 frames
     
-    # MIDI range for pitch normalization
-    midi_min = 40   # E2 (lowest guitar string)
-    midi_max = 103  # C6 (highest practical guitar note)
+    # MIDI range for pitch normalization: C2 to C8
+    midi_min = 36   # C2 (was incorrectly E2=40)
+    midi_max = 108  # C8
 
 
 # ============================================================================

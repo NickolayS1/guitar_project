@@ -178,13 +178,13 @@ def main():
     train_dataset = GuitarSetFrameDataset(
         root_dir=config['data']['root_dir'],
         split='train',
-        negative_ratio=1.0
+        negative_ratio=config['data'].get('negative_ratio', 1.0)
     )
     
     val_dataset = GuitarSetFrameDataset(
         root_dir=config['data']['root_dir'],
         split='val',
-        negative_ratio=1.0
+        negative_ratio=config['data'].get('negative_ratio', 1.0)
     )
     
     if len(train_dataset) == 0:
@@ -232,6 +232,27 @@ def main():
         lr=config['training']['learning_rate'],
         weight_decay=config['training']['weight_decay']
     )
+    
+    # Create scheduler (OneCycleLR)
+    scheduler_config = config['training']['scheduler']
+    if scheduler_config['type'] == 'one_cycle':
+        # Compute steps_per_epoch if not set
+        steps_per_epoch = len(train_loader)
+        total_steps = steps_per_epoch * scheduler_config['epochs']
+        pct_start = scheduler_config.get('pct_start', 0.3)
+        
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            optimizer,
+            max_lr=scheduler_config['max_lr'],
+            total_steps=total_steps,
+            pct_start=pct_start,
+            anneal_strategy=scheduler_config.get('anneal_strategy', 'cos'),
+            cycle_momentum=False
+        )
+        use_scheduler = True
+    else:
+        scheduler = None
+        use_scheduler = False
     
     # Create loss function
     loss_fn = CombinedLoss(
@@ -302,6 +323,10 @@ def main():
                     torch.nn.utils.clip_grad_norm_(model.parameters(), config['training']['grad_clip'])
                 
                 optimizer.step()
+                
+                # OneCycleLR step after each batch
+                if use_scheduler:
+                    scheduler.step()
                 
                 pbar.set_postfix({
                     'loss': f'{loss.item():.4f}',

@@ -37,8 +37,8 @@ def evaluate_model(model, dataloader, device, onset_threshold=0.5):
     model.eval()
     
     metrics_collector = GuitarTranscriptionMetrics(
-        midi_min=40,
-        midi_max=103
+        midi_min=36,  # C2
+        midi_max=108  # C8
     )
     
     total_loss = 0.0
@@ -85,7 +85,9 @@ def main():
     parser.add_argument('--device', type=str, default=None,
                         help='Device to use (cuda/cpu)')
     parser.add_argument('--output', type=str, default=None,
-                        help='Path to save results (optional)')
+                        help='Path to save results JSON (optional)')
+    parser.add_argument('--save_predictions', type=str, default=None,
+                        help='Path to save predictions PT file (optional)')
     
     args = parser.parse_args()
     
@@ -148,7 +150,7 @@ def main():
     dataset = GuitarSetFrameDataset(
         root_dir=config['data']['root_dir'],
         split=args.split,
-        negative_ratio=1.0
+        negative_ratio=config['data'].get('negative_ratio', 1.0)
     )
     
     if len(dataset) == 0:
@@ -194,9 +196,9 @@ def main():
         print(f"Pitch True (norm):  {pitch_true.numpy()}")
         print(f"Pitch Pred (norm):  {pitch_pred.cpu().numpy()}")
         
-        # Denormalize
-        pitch_true_midi = pitch_true.numpy() * (103 - 40) + 40
-        pitch_pred_midi = pitch_pred.cpu().numpy() * (103 - 40) + 40
+        # Denormalize (using C2=36, C8=108)
+        pitch_true_midi = pitch_true.numpy() * (108 - 36) + 36
+        pitch_pred_midi = pitch_pred.cpu().numpy() * (108 - 36) + 36
         print(f"Pitch True (MIDI):  {pitch_true_midi}")
         print(f"Pitch Pred (MIDI):  {pitch_pred_midi}")
     print(f"{'='*60}\n")
@@ -229,6 +231,48 @@ def main():
             json.dump(results, f, indent=2)
         
         print(f"Results saved to: {output_path}\n")
+    
+    # Save predictions for peak picking
+    if args.save_predictions:
+        save_path = Path(args.save_predictions)
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Save all predictions and ground truth
+        predictions = {
+            'onset_pred': [],
+            'pitch_pred': [],
+            'onset_true': [],
+            'pitch_true': []
+        }
+        
+        model.eval()
+        with torch.no_grad():
+            for batch in dataloader:
+                cqt = batch['cqt'].to(device)
+                cqt = cqt.unsqueeze(1)
+                onset_true = batch['onset']
+                pitch_true = batch['pitch']
+                
+                onset_pred, pitch_pred = model(cqt)
+                
+                predictions['onset_pred'].append(onset_pred.cpu())
+                predictions['pitch_pred'].append(pitch_pred.cpu())
+                predictions['onset_true'].append(onset_true)
+                predictions['pitch_true'].append(pitch_true)
+        
+        # Concatenate all batches
+        predictions['onset_pred'] = torch.cat(predictions['onset_pred'], dim=0)
+        predictions['pitch_pred'] = torch.cat(predictions['pitch_pred'], dim=0)
+        predictions['onset_true'] = torch.cat(predictions['onset_true'], dim=0)
+        predictions['pitch_true'] = torch.cat(predictions['pitch_true'], dim=0)
+        
+        # Save
+        torch.save(predictions, save_path)
+        print(f"Predictions saved to: {save_path}")
+        print(f"  onset_pred: {predictions['onset_pred'].shape}")
+        print(f"  pitch_pred: {predictions['pitch_pred'].shape}")
+        print(f"  onset_true: {predictions['onset_true'].shape}")
+        print(f"  pitch_true: {predictions['pitch_true'].shape}\n")
 
 
 if __name__ == '__main__':

@@ -1,8 +1,8 @@
-# Configuration for Dual-Branch Guitar Transcription Training
+# Configuration for Enhanced Baseline Guitar Transcription Training
 
 # Experiment settings
 experiment:
-  name: "dual_branch_audio_only"
+  name: "enhanced_baseline_audio_only"
   seed: 42
   device: "cpu"  # "cuda" or "cpu"
 
@@ -26,7 +26,7 @@ data:
   total_frames: 13  # 2 * context_frames + prediction_frames
   
   # Normalization
-  midi_min: 36  # C2 (was incorrectly 40=E2)
+  midi_min: 36  # C2
   midi_max: 108  # C8
   
   # Negative sampling (increased for better training)
@@ -41,20 +41,17 @@ data:
 
 # Model settings
 model:
-  type: "DualBranchCNN"  # "BaselineCNN" or "DualBranchCNN"
+  type: "EnhancedBaselineCNN"  # Enhanced version with SE + Dilated + Residual
   n_strings: 6
   
-  # Dual-Branch CNN architecture (increased capacity)
-  dual_branch:
-    encoder_channels: [64, 128, 192]  # Increased from [32, 64, 96]
-    head_hidden: 128  # Increased from 64
+  # Enhanced Baseline CNN architecture
+  enhanced_baseline:
     dropout: 0.3
-    se_reduction: 8  # SE block reduction ratio
 
 # Training settings
 training:
-  batch_size: 32
-  epochs: 6  # Same as baseline (OneCycleLR)
+  batch_size: 512
+  epochs: 6
   optimizer: "adam"
   learning_rate: 0.001
   weight_decay: 0.0001
@@ -69,7 +66,7 @@ training:
     onset_weight: 2.0  # Balanced with pitch
     pitch_weight: 2.0  # Balanced with onset
     onset_pos_weight: 2.0  # Class imbalance handling
-
+  
   # Learning rate scheduler (One Cycle for 6 epochs)
   scheduler:
     type: "one_cycle"
@@ -92,13 +89,13 @@ training:
   
   # Checkpointing
   checkpoint:
-    save_dir: "experiments/dual_branch/checkpoints"
+    save_dir: "experiments/enhanced_baseline/checkpoints"
     save_last: true
     save_best: true
   
   # Logging
   logging:
-    log_dir: "experiments/dual_branch/logs"
+    log_dir: "experiments/enhanced_baseline/logs"
     print_freq: 1  # Print every N batches
     use_tqdm: true
 
@@ -108,7 +105,7 @@ evaluation:
   onset_tolerance_ms: 50
   midi_min: 36  # C2
   midi_max: 108  # C8
-
+  
   # Metrics
   metrics:
     - "onset_precision"

@@ -15,13 +15,20 @@ class CombinedLoss(nn.Module):
     Combined loss for guitar transcription.
     
     Total Loss = λ_onset * WeightedBCE(onset) + λ_pitch * MSE(pitch | active)
+    
+    Pitch loss computed ONLY for active strings (where mask=1).
     """
     
-    def __init__(self, onset_weight: float = 1.0, pitch_weight: float = 1.0, onset_pos_weight: float = 2.0):
+    def __init__(
+        self,
+        onset_weight: float = 1.0,
+        pitch_weight: float = 1.0,
+        onset_pos_weight: float = 2.0
+    ):
         super().__init__()
         self.onset_weight = onset_weight
         self.pitch_weight = pitch_weight
-        self.onset_pos_weight = onset_pos_weight  # Weight for positive class
+        self.onset_pos_weight = onset_pos_weight
     
     def forward(
         self,
@@ -34,21 +41,12 @@ class CombinedLoss(nn.Module):
         """
         Compute combined loss.
         
-        Args:
-            onset_pred: [B, 6] - predicted onset probabilities
-            pitch_pred: [B, 6] - predicted normalized MIDI
-            onset_true: [B, 6] - ground truth onsets
-            pitch_true: [B, 6] - ground truth normalized MIDI
-            mask: [B, 6] - active strings mask (uses onset_true if None)
-        
-        Returns:
-            Dictionary with total, onset, pitch losses
+        Pitch loss computed ONLY where mask=1 (active strings).
         """
         if mask is None:
             mask = onset_true
         
         # Weighted BCE for onset detection (handle class imbalance)
-        # pos_weight > 1 increases penalty for missing positive onsets
         loss_onset = F.binary_cross_entropy(
             onset_pred, 
             onset_true, 
@@ -60,7 +58,6 @@ class CombinedLoss(nn.Module):
         loss_onset = (loss_onset * weights).mean()
         
         # MSE for pitch (ONLY for active strings!)
-        # Zero out loss for inactive strings
         pitch_diff = (pitch_pred - pitch_true) ** 2
         masked_pitch_loss = pitch_diff * mask  # Zero where mask=0
         

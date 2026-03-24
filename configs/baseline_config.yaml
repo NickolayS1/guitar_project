@@ -26,15 +26,18 @@ data:
   total_frames: 13  # 2 * context_frames + prediction_frames
   
   # Normalization
-  midi_min: 40  # E2
-  midi_max: 103  # C6
+  midi_min: 36  # C2 (was incorrectly 40=E2)
+  midi_max: 108  # C8
   
-  # Augmentation
+  # Negative sampling (increased for better training)
+  negative_ratio: 3.0  # 3x more negative samples (75% silence, 25% onsets)
+  
+  # Augmentation (DISABLED for now)
   augmentation:
     pitch_shift_range: [-2.0, 2.0]  # semitones
     time_stretch_range: [0.9, 1.1]
     noise_std: 0.005
-    apply_augmentation: true
+    apply_augmentation: false  # DISABLED
 
 # Model settings
 model:
@@ -49,8 +52,8 @@ model:
 
 # Training settings
 training:
-  batch_size: 64
-  epochs: 10
+  batch_size: 512  # Same as dual_branch for fair comparison
+  epochs: 6  # Same as dual_branch (OneCycleLR)
   optimizer: "adam"
   learning_rate: 0.001
   weight_decay: 0.0001
@@ -60,18 +63,19 @@ training:
   num_workers: 0  # Number of worker processes (0 = main process)
   prefetch_factor: 2  # Number of batches loaded in advance by each worker
   
-  # Loss weights
+  # Loss weights (BALANCED)
   loss:
-    onset_weight: 1.0
-    pitch_weight: 1.0
-  
-  # Learning rate scheduler
+    onset_weight: 2.0  # Balanced with pitch
+    pitch_weight: 2.0  # Balanced with onset
+
+  # Learning rate scheduler (One Cycle for 6 epochs)
   scheduler:
-    type: "reduce_on_plateau"
-    mode: "min"
-    factor: 0.5
-    patience: 5
-    min_lr: 0.000001  # Use explicit float notation
+    type: "one_cycle"
+    max_lr: 0.001
+    epochs: 6
+    steps_per_epoch: null  # Will be computed from dataloader
+    pct_start: 0.3  # 30% warmup, 70% decay
+    anneal_strategy: "cos"  # Cosine annealing
   
   # Early stopping
   early_stopping:
@@ -100,9 +104,9 @@ training:
 evaluation:
   onset_threshold: 0.5
   onset_tolerance_ms: 50
-  midi_min: 40
-  midi_max: 103
-  
+  midi_min: 36  # C2
+  midi_max: 108  # C8
+
   # Metrics
   metrics:
     - "onset_precision"

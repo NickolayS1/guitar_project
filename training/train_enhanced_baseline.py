@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Training script for dual-branch guitar transcription model.
+Training script for enhanced baseline guitar transcription model.
 
 Usage:
-    python training/train_dual_branch.py --config configs/dual_branch_config.yaml
+    python training/train_enhanced_baseline.py --config configs/enhanced_baseline_config.yaml
 """
 
 import argparse
@@ -24,7 +24,7 @@ import torch.optim as optim
 import yaml
 from tqdm import tqdm
 
-from models.dual_branch_cnn import DualBranchCNN
+from models.enhanced_baseline_cnn import EnhancedBaselineCNN
 from data_loading.guitarset_frame_dataset import GuitarSetFrameDataset
 from data_loading.dataloader import create_dataloader
 from training.losses import CombinedLoss
@@ -129,8 +129,8 @@ def validate_epoch(model, dataloader, loss_fn, device):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Train dual-branch guitar transcription model')
-    parser.add_argument('--config', '-c', type=str, default='configs/dual_branch_config.yaml',
+    parser = argparse.ArgumentParser(description='Train enhanced baseline guitar transcription model')
+    parser.add_argument('--config', '-c', type=str, default='configs/enhanced_baseline_config.yaml',
                         help='Path to configuration file')
     parser.add_argument('--epochs', type=int, default=None,
                         help='Number of epochs (overrides config)')
@@ -167,7 +167,7 @@ def main():
         device = torch.device('cpu')
     
     print(f"\n{'='*60}")
-    print(f"Guitar Transcription Training - Dual-Branch CNN")
+    print(f"Guitar Transcription Training - Enhanced Baseline CNN")
     print(f"{'='*60}")
     print(f"Experiment: {config['experiment']['name']}")
     print(f"Device: {device}")
@@ -214,12 +214,9 @@ def main():
     
     # Create model
     print("Creating model...")
-    model = DualBranchCNN(
+    model = EnhancedBaselineCNN(
         n_strings=config['model']['n_strings'],
-        encoder_channels=config['model']['dual_branch']['encoder_channels'],
-        head_hidden=config['model']['dual_branch']['head_hidden'],
-        dropout=config['model']['dual_branch']['dropout'],
-        se_reduction=config['model']['dual_branch']['se_reduction']
+        dropout=config['model']['enhanced_baseline']['dropout']
     )
     
     model = model.to(device)
