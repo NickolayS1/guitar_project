@@ -21,6 +21,7 @@ import yaml
 
 from models.baseline_cnn import BaselineCNN
 from data_loading.guitarset_frame_dataset import GuitarSetFrameDataset
+from data_loading.own_sessions_dataset import OwnSessionsDataset
 from data_loading.dataloader import create_dataloader
 from evaluation.metrics import GuitarTranscriptionMetrics
 
@@ -88,7 +89,10 @@ def main():
                         help='Path to save results JSON (optional)')
     parser.add_argument('--save_predictions', type=str, default=None,
                         help='Path to save predictions PT file (optional)')
-    
+    parser.add_argument('--dataset', type=str, default='guitarset',
+                        choices=['guitarset', 'own_sessions'],
+                        help='Dataset to use (guitarset or own_sessions)')
+
     args = parser.parse_args()
     
     # Load configuration
@@ -103,20 +107,29 @@ def main():
     # Load checkpoint
     print(f"Loading checkpoint from {args.checkpoint}...")
     checkpoint = torch.load(args.checkpoint, map_location=device)
+
+    # Create model - support both baseline and enhanced_baseline
+    print(f"Creating model...")
     
-    # Create model with current config parameters
-    print(f"Creating model with parameters:")
-    print(f"  encoder_channels: {config['model']['baseline']['encoder_channels']}")
-    print(f"  head_hidden: {config['model']['baseline']['head_hidden']}")
-    print(f"  dropout: {config['model']['baseline']['dropout']}")
-    
-    model = BaselineCNN(
-        n_strings=config['model']['n_strings'],
-        encoder_channels=config['model']['baseline']['encoder_channels'],
-        head_hidden=config['model']['baseline']['head_hidden'],
-        dropout=config['model']['baseline']['dropout']
-    )
-    
+    # Check if it's enhanced_baseline config
+    if 'enhanced_baseline' in config['model']:
+        from models.enhanced_baseline_cnn import EnhancedBaselineCNN
+        model = EnhancedBaselineCNN(
+            n_strings=config['model']['n_strings'],
+            dropout=config['model']['enhanced_baseline']['dropout']
+        )
+        print(f"  Model: EnhancedBaselineCNN")
+        print(f"  Dropout: {config['model']['enhanced_baseline']['dropout']}")
+    else:
+        model = BaselineCNN(
+            n_strings=config['model']['n_strings'],
+            encoder_channels=config['model']['baseline']['encoder_channels'],
+            head_hidden=config['model']['baseline']['head_hidden'],
+            dropout=config['model']['baseline']['dropout']
+        )
+        print(f"  Model: BaselineCNN")
+        print(f"  Encoder channels: {config['model']['baseline']['encoder_channels']}")
+
     print(f"Model created with {model.count_parameters():,} parameters")
     
     # Load weights with error handling for shape mismatch
@@ -147,16 +160,33 @@ def main():
     
     # Load dataset
     print(f"Loading {args.split} dataset...")
-    dataset = GuitarSetFrameDataset(
-        root_dir=config['data']['root_dir'],
-        split=args.split,
-        negative_ratio=config['data'].get('negative_ratio', 1.0)
-    )
     
+    if args.dataset == 'own_sessions':
+        # Use own sessions dataset
+        own_sessions_dir = Path("data/own_sessions")
+        
+        if not own_sessions_dir.exists():
+            print(f"Error: {own_sessions_dir} not found")
+            return
+        
+        dataset = OwnSessionsDataset(
+            root_dir=str(own_sessions_dir),
+            split=args.split,
+            split_dir='splits',
+            negative_ratio=1.0
+        )
+    else:
+        # Use GuitarSet dataset
+        dataset = GuitarSetFrameDataset(
+            root_dir=config['data']['root_dir'],
+            split=args.split,
+            negative_ratio=config['data'].get('negative_ratio', 1.0)
+        )
+
     if len(dataset) == 0:
         print("\n[ERROR] Dataset is empty!")
         return
-    
+
     # Create dataloader
     dataloader = create_dataloader(
         dataset,
@@ -165,7 +195,7 @@ def main():
         num_workers=config['training'].get('num_workers', 0),
         prefetch_factor=config['training'].get('prefetch_factor', 2)
     )
-    
+
     print(f"Evaluation samples: {len(dataset)}\n")
     
     # Evaluate
@@ -176,36 +206,10 @@ def main():
         device,
         onset_threshold=args.threshold
     )
-    
-    # Debug: Print sample predictions
-    print(f"\n{'='*60}")
-    print(f"Debug: Sample predictions (first batch)")
-    print(f"{'='*60}")
-    model.eval()
-    with torch.no_grad():
-        batch = next(iter(dataloader))
-        cqt = batch['cqt'].to(device)[:4]
-        cqt = cqt.unsqueeze(1)
-        onset_true = batch['onset'][:4]
-        pitch_true = batch['pitch'][:4]
-        
-        onset_pred, pitch_pred = model(cqt)
-        
-        print(f"Onset True:  {onset_true.numpy()}")
-        print(f"Onset Pred:  {onset_pred.cpu().numpy()}")
-        print(f"Pitch True (norm):  {pitch_true.numpy()}")
-        print(f"Pitch Pred (norm):  {pitch_pred.cpu().numpy()}")
-        
-        # Denormalize (using C2=36, C8=108)
-        pitch_true_midi = pitch_true.numpy() * (108 - 36) + 36
-        pitch_pred_midi = pitch_pred.cpu().numpy() * (108 - 36) + 36
-        print(f"Pitch True (MIDI):  {pitch_true_midi}")
-        print(f"Pitch Pred (MIDI):  {pitch_pred_midi}")
-    print(f"{'='*60}\n")
-    
+
     # Print summary
     print(collector.summary())
-    
+
     # Print detailed metrics
     print(f"\n{'='*60}")
     print(f"Detailed Metrics")

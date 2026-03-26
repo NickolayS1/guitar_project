@@ -21,6 +21,7 @@ import yaml
 
 from models.enhanced_baseline_cnn import EnhancedBaselineCNN
 from data_loading.guitarset_frame_dataset import GuitarSetFrameDataset
+from data_loading.own_sessions_dataset import OwnSessionsDataset
 from data_loading.dataloader import create_dataloader
 from evaluation.metrics import GuitarTranscriptionMetrics
 
@@ -88,7 +89,10 @@ def main():
                         help='Path to save results JSON (optional)')
     parser.add_argument('--save_predictions', type=str, default=None,
                         help='Path to save predictions PT file (optional)')
-    
+    parser.add_argument('--dataset', type=str, default='guitarset',
+                        choices=['guitarset', 'own_sessions'],
+                        help='Dataset to use (guitarset or own_sessions)')
+
     args = parser.parse_args()
     
     # Load configuration
@@ -141,16 +145,33 @@ def main():
     
     # Load dataset
     print(f"Loading {args.split} dataset...")
-    dataset = GuitarSetFrameDataset(
-        root_dir=config['data']['root_dir'],
-        split=args.split,
-        negative_ratio=config['data'].get('negative_ratio', 1.0)
-    )
     
+    if args.dataset == 'own_sessions':
+        # Use own sessions dataset (audio only, ignore video)
+        own_sessions_dir = Path("data/own_sessions")
+        
+        if not own_sessions_dir.exists():
+            print(f"Error: {own_sessions_dir} not found")
+            return
+        
+        dataset = OwnSessionsDataset(
+            root_dir=str(own_sessions_dir),
+            split=args.split,
+            split_dir='splits',
+            negative_ratio=1.0
+        )
+    else:
+        # Use GuitarSet dataset
+        dataset = GuitarSetFrameDataset(
+            root_dir=config['data']['root_dir'],
+            split=args.split,
+            negative_ratio=config['data'].get('negative_ratio', 1.0)
+        )
+
     if len(dataset) == 0:
         print("\n[ERROR] Dataset is empty!")
         return
-    
+
     # Create dataloader
     dataloader = create_dataloader(
         dataset,
@@ -159,7 +180,7 @@ def main():
         num_workers=config['training'].get('num_workers', 0),
         prefetch_factor=config['training'].get('prefetch_factor', 2)
     )
-    
+
     print(f"Evaluation samples: {len(dataset)}\n")
     
     # Evaluate
