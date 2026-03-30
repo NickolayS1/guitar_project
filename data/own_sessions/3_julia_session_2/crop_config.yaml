@@ -1,0 +1,9 @@
+video_crop:
+  enabled: true
+  height: 224
+  rotation_angle: -11.0
+  target_height: 224
+  target_width: 224
+  width: 224
+  x: 653
+  y: 391

@@ -173,12 +173,16 @@ def main():
         return
 
     # Create dataloader
+    # Use smaller batch size for own_sessions (max 256)
+    batch_size = min(config['training']['batch_size'], 256) if args.dataset == 'own_sessions' else config['training']['batch_size']
+    
     dataloader = create_dataloader(
         dataset,
-        batch_size=config['training']['batch_size'],
+        batch_size=batch_size,
         shuffle=False,
         num_workers=config['training'].get('num_workers', 0),
-        prefetch_factor=config['training'].get('prefetch_factor', 2)
+        prefetch_factor=config['training'].get('prefetch_factor', 2),
+        drop_last=False  # Don't drop last batch for evaluation!
     )
 
     print(f"Evaluation samples: {len(dataset)}\n")

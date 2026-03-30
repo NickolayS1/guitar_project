@@ -1,0 +1,24 @@
+sessions:
+  test:
+  - 6_julia_session_2
+  - 1_chromatic_session_1
+  - 2_julia_session_2
+  train:
+  - 4_julia_session_2
+  - 5_julia_session_2
+  - 3_julia_session_2
+  - 4_chromatic_session_1
+  - 8_chromatic_session_1
+  - 6_chromatic_session_1
+  - 7_chromatic_session_1
+  - 5_chromatic_session_1
+  - 1_julia_session_2
+  - 2_chromatic_session_1
+  - 7_julia_session_2
+  val:
+  - 8_julia_session_2
+  - 3_chromatic_session_1
+test_sessions: 3
+total_sessions: 16
+train_sessions: 11
+val_sessions: 2

@@ -1,0 +1,65 @@
+# Configuration for Multimodal Guitar Transcription Training
+
+experiment:
+  name: "multimodal_convnext_atto"
+  seed: 42
+  device: "cuda"
+
+# Data settings (for compatibility)
+data:
+  root_dir: "data/guitarset"
+  negative_ratio: 3.0
+
+model:
+  n_strings: 6
+  dropout: 0.3
+  fusion_type: "cross_attention"  # "cross_attention" or "simple"
+
+# Training settings
+training:
+  batch_size: 8  # Smaller due to video memory
+  epochs: 60
+  optimizer: "adam"
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  grad_clip: 1.0
+  
+  # Dataset settings
+  negative_ratio: 3.0  # 3x more negative samples (75% silence, 25% onsets)
+
+  # Loss weights
+  loss:
+    onset_weight: 2.0
+    pitch_weight: 2.0
+    onset_pos_weight: 2.0  # Class imbalance handling
+  
+  # OneCycleLR scheduler
+  scheduler:
+    type: "one_cycle"
+    max_lr: 0.001
+    epochs: 60
+    pct_start: 0.3
+    anneal_strategy: "cos"
+  
+  # Validation
+  validation:
+    interval: 1
+  
+  # Checkpointing
+  checkpoint:
+    save_dir: "experiments/multimodal/checkpoints"
+    save_last: true
+    save_best: true
+  
+  # Logging
+  logging:
+    log_dir: "onsets/experiments/multimodal/logs"
+    print_freq: 1
+    use_tqdm: true
+
+# Evaluation settings
+evaluation:
+  onset_threshold: 0.5
+  onset_tolerance_ms: 50
+  midi_min: 36
+  midi_max: 108
