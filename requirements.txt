@@ -1,0 +1,34 @@
+# Guitar Transcription Project — Dependencies
+
+# Core
+torch>=2.0.0
+numpy>=1.24.0
+
+# Audio processing
+librosa>=0.10.0
+soundfile>=0.12.0
+
+# Video processing
+opencv-python>=4.8.0
+
+# Guitar Pro files
+pyguitarpro>=1.0.0
+
+# Video processing for labels
+moviepy>=1.0.0
+
+# Data
+pandas>=2.0.0
+pyyaml>=6.0
+
+# Progress
+tqdm>=4.65.0
+
+# Metrics
+scikit-learn>=1.3.0
+
+# Visualization
+matplotlib>=3.7.0
+
+# Timm (ConvNeXt)
+timm>=0.9.0
